@@ -10,25 +10,62 @@ def divide(number):
     return number, []
 
 def merge(first, second, op=operator.gt):
+    #return recursive_merge(first, second, op)
+    return iterative_merge(first, second, op)
+
+
+def recursive_merge(first, second, op):
     if not (first and second):
         result = first if first else second
         return result
 
     if op(first[0], second[0]):
         result = second[:1]
-        result.extend(merge(first, second[1:], op))
+        result.extend(recursive_merge(first, second[1:], op))
         return result
 
     result = first[:1]
-    result.extend(merge(first[1:], second, op))
+    result.extend(recursive_merge(first[1:], second, op))
+    return result
+
+def iterative_merge(first, second, op):
+    if not (first and second):
+        result = first if first else second
+        return result
+
+    first_it = iter(first)
+    second_it = iter(second)
+    i = next(first_it)
+    j = next(second_it)
+    result = list()
+    while True:
+        if op(i,j):
+            result.append(j)
+            try:
+                j = next(second_it)
+            except StopIteration:
+                result.append(i)
+                result.extend(first_it)
+                break
+        else:
+            result.append(i)
+            try:
+                i = next(first_it)
+            except StopIteration:
+                result.append(j)
+                result.extend(second_it)
+                break
+
     return result
                 
 def sort(input, op=operator.gt):
     if len(input) < 2:
         return input
 
-    first, second = divide(input)    
-    return merge(sort(first, op), sort(second, op), op)
+    first, second = divide(input)
+    first_sorted = sort(first, op)
+    second_sorted = sort(second, op)
+    return merge(first_sorted, second_sorted, op)
 
 class TestSort(unittest.TestCase):
 
@@ -66,7 +103,7 @@ class TestSort(unittest.TestCase):
         self.assertEqual([1,2,3,4,5,6,7,8], sort([5,4,1,8,7,2,6,3]))
         self.assertEqual([8,7,6,5,4,3,2,1], sort([5,4,1,8,7,2,6,3], op=operator.lt))
 
-    def DISABLED_test_random_sort(self):
+    def test_random_sort(self):
         sample = [int(1000*random.random()) for i in range(10000)]
         sample_copy = sample.copy()
         sample_copy.sort()
